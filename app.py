@@ -2,10 +2,12 @@
 
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, flash
 from flask_debugtoolbar import DebugToolbarExtension
 
-from models import connect_db, Cafe
+from models import db, connect_db, Cafe, City
+
+from forms import CafeForm
 
 
 app = Flask(__name__)
@@ -87,3 +89,67 @@ def cafe_detail(cafe_id):
         'cafe/detail.html',
         cafe=cafe,
     )
+
+
+@app.route('/cafes/add', methods=["GET", "POST"])
+def handle_add_cafe():
+    """If GET, shows add cafe form. If POST, handles form submission."""
+
+    form = CafeForm()
+    form.city_code.choices = CafeForm.get_city_choices()
+
+    if form.validate_on_submit():
+        cafe = Cafe(
+            name=form.name.data,
+            description=form.description.data,
+            url=form.url.data,
+            address=form.address.data,
+            city_code=form.city_code.data,
+            image_url=form.image_url.data or Cafe.image_url.default.arg
+        )
+
+        db.session.add(cafe)
+        db.session.commit()
+
+        flash(f"{cafe.name} added")
+
+        return redirect(f'/cafes/{cafe.id}')
+
+    else:
+        return render_template('cafe/add-form.html', form=form)
+
+
+@app.route('/cafes/<int:cafe_id>/edit', methods=["GET", "POST"])
+def handle_edit_cafe(cafe_id):
+    """If GET, shows edit cafe form. If POST, handles form submission."""
+
+    cafe = Cafe.query.get_or_404(cafe_id)
+
+    form = CafeForm(
+        data={
+            "name": cafe.name,
+            "description": cafe.description,
+            "url": cafe.url,
+            "address": cafe.address,
+            "city_code": cafe.city_code
+        }
+    )
+
+    form.city_code.choices = CafeForm.get_city_choices()
+
+    if form.validate_on_submit():
+        cafe.name = form.name.data,
+        cafe.description = form.description.data,
+        cafe.url = form.url.data,
+        cafe.address = form.address.data,
+        cafe.city_code = form.city_code.data,
+        cafe.image_url = form.image_url.data or Cafe.image_url.default.arg
+
+        db.session.commit()
+
+        flash(f"{cafe.name} edited")
+
+        return redirect(f'/cafes/{cafe.id}')
+
+    else:
+        return render_template('cafe/edit-form.html', form=form, cafe=cafe)

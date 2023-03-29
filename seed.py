@@ -1,11 +1,11 @@
 """Initial data."""
 
-from models import City, Cafe, User, db, connect_db
+from models import City, Cafe, db, connect_db
 from flask import Flask
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///flaskcafe'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///flask_cafe'
 app.config['SQLALCHEMY_ECHO'] = True
 
 connect_db(app)
