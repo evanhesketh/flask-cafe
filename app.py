@@ -2,7 +2,7 @@
 
 import os
 
-from flask import Flask, render_template, redirect, flash, session, g
+from flask import Flask, render_template, redirect, flash, session, g, jsonify, request
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from models import db, connect_db, Cafe, City, User
@@ -305,3 +305,21 @@ def handle_edit_profile():
 
     else:
         return render_template('profile/edit-form.html', form=form)
+
+###############################################################################
+# like routes
+
+@app.get('/api/likes')
+def handle_like_query():
+    if not g.user:
+        error_msg = {"error": "Not logged in"}
+        return jsonify(error_msg)
+
+    cafe_id = int(request.args['cafe_id'])
+
+    for cafe in g.user.liked_cafes:
+
+        if cafe.id == cafe_id:
+            return jsonify({"likes": True})
+
+    return jsonify({"likes": False})

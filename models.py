@@ -74,6 +74,8 @@ class Cafe(db.Model):
 
     city = db.relationship("City", backref='cafes')
 
+    # liking_users <-> user.liked_cafes
+
     def __repr__(self):
         return f'<Cafe id={self.id} name="{self.name}">'
 
@@ -82,6 +84,7 @@ class Cafe(db.Model):
 
         city = self.city
         return f'{city.name}, {city.state}'
+
 
 class User(db.Model):
     """User information."""
@@ -136,21 +139,26 @@ class User(db.Model):
         nullable=False
     )
 
+    liked_cafes = db.relationship(
+        'Cafe',
+        secondary='likes',
+        backref='liking_users'
+    )
+
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'
 
     @classmethod
     def register(
-        cls,
-        username,
-        email,
-        first_name,
-        last_name,
-        description,
-        password,
-        image_url='/static/images/default-pic.png',
-        admin=False):
-
+            cls,
+            username,
+            email,
+            first_name,
+            last_name,
+            description,
+            password,
+            image_url='/static/images/default-pic.png',
+            admin=False):
         """Hashes password adds user to system."""
 
         hashed_password = bcrypt.generate_password_hash(
@@ -180,14 +188,33 @@ class User(db.Model):
         Returns False if username is not found or password is invalid.
         """
 
-        user = User.query.filter_by(username = username).first()
+        user = User.query.filter_by(username=username).first()
 
         if user:
-            is_auth = bcrypt.check_password_hash(user.hashed_password, password)
+            is_auth = bcrypt.check_password_hash(
+                user.hashed_password, password)
             if is_auth:
                 return user
 
         return False
+
+
+class Like(db.Model):
+    """Join table for likes."""
+
+    __tablename__ = "likes"
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id'),
+        primary_key=True
+    )
+
+    cafe_id = db.Column(
+        db.Integer,
+        db.ForeignKey('cafes.id'),
+        primary_key=True
+    )
 
 
 def connect_db(app):

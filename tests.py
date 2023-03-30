@@ -1,7 +1,7 @@
 """Tests for Flask Cafe."""
 
 
-from models import db, Cafe, City, User, connect_db  # , User, Like
+from models import db, Cafe, City, User, Like, connect_db  # , User, Like
 from forms import CafeForm
 from unittest import TestCase
 
@@ -438,32 +438,40 @@ class AuthViewsTestCase(TestCase):
             self.assertEqual(session.get(CURR_USER_KEY), None)
 
 
-# class NavBarTestCase(TestCase):
-#     """Tests navigation bar."""
+class NavBarTestCase(TestCase):
+    """Tests navigation bar."""
 
-#     def setUp(self):
-#         """Before tests, add sample user."""
+    def setUp(self):
+        """Before tests, add sample user."""
 
-#         User.query.delete()
+        User.query.delete()
 
-#         user = User.register(**TEST_USER_DATA)
+        user = User.register(**TEST_USER_DATA)
 
-#         db.session.add_all([user])
-#         db.session.commit()
+        db.session.add_all([user])
+        db.session.commit()
 
-#         self.user_id = user.id
+        self.user_id = user.id
 
-#     def tearDown(self):
-#         """After tests, remove all users."""
+    def tearDown(self):
+        """After tests, remove all users."""
 
-#         User.query.delete()
-#         db.session.commit()
+        User.query.delete()
+        db.session.commit()
 
-#     def test_anon_navbar(self):
-#         self.fail("FIXME: write this test")
+    def test_anon_navbar(self):
+        with app.test_client() as client:
+            resp = client.get('/cafes')
+            html = resp.get_data(as_text=True)
+            self.assertIn('Log In</a>', html)
 
-#     def test_logged_in_navbar(self):
-#         self.fail("FIXME: write this test")
+
+    def test_logged_in_navbar(self):
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.get('/cafes')
+            html = resp.get_data(as_text=True)
+            self.assertIn('Log Out</button>', html)
 
 
 class ProfileViewsTestCase(TestCase):
@@ -529,6 +537,52 @@ class ProfileViewsTestCase(TestCase):
 
 
 class LikeViewsTestCase(TestCase):
-    """Tests for views on cafes."""
+    """Tests for views on likes."""
 
-    # FIXME: add setup/teardown/inidividual tests
+    def setUp(self):
+        """Before each test, add sample user, sample city, and sample cafe."""
+
+        User.query.delete()
+
+        user = User.register(**TEST_USER_DATA)
+        sf = City(**CITY_DATA)
+        cafe = Cafe(**CAFE_DATA)
+        db.session.add_all([user, sf, cafe])
+
+        db.session.commit()
+
+        self.user_id = user.id
+        self.cafe_id = cafe.id
+
+    def tearDown(self):
+        """After each test, remove all likes, users, cafes, and cities."""
+
+        Like.query.delete()
+        User.query.delete()
+        Cafe.query.delete()
+        City.query.delete()
+
+        db.session.commit()
+
+    def test_like_a_cafe_logged_in(self):
+        user = User.query.get(self.user_id)
+        cafe = Cafe.query.get(self.cafe_id)
+        user.liked_cafes.append(cafe)
+
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.get('/profile', follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertIn('Test Cafe', html)
+
+    def test_get_like_status(self):
+        user = User.query.get(self.user_id)
+        cafe = Cafe.query.get(self.cafe_id)
+        user.liked_cafes.append(cafe)
+
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.get('/api/likes', query_string={"cafe_id": 1})
+            self.assertEqual({"likes": True}, resp.json)
+
+

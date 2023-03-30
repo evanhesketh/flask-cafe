@@ -25,6 +25,18 @@
     </p>
 
   </div>
+  <div>
+    {% if user.liked_cafes | length > 0 %}
+      <p><b>Cafes you have liked</b></p>
+      <ul>
+        {% for cafe in user.liked_cafes %}
+          <li>{{ cafe.name }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p><b>You have no liked cafes</b></p>
+    {% endif %}
+  </div>
 
 </div>
 
