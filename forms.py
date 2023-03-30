@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TextAreaField
+from wtforms import StringField, SelectField, TextAreaField, PasswordField
 from wtforms.validators import DataRequired, URL, Optional, Email, Length
 from models import City
 class CafeForm(FlaskForm):
@@ -35,8 +35,8 @@ class CafeForm(FlaskForm):
         validators=[Optional(), URL()]
     )
 
-    #TODO: should this be a class method?
-    def get_city_choices(self):
+    @classmethod
+    def get_city_choices(cls):
         """Get choices for city form field"""
 
         return [(c.code, c.name) for c in City.query.order_by('code')]
@@ -69,7 +69,7 @@ class SignupForm(FlaskForm):
         validators=[DataRequired(), Email()]
     )
 
-    password = StringField(
+    password = PasswordField(
         "password",
         validators=[DataRequired(), Length(min=6)]
     )
@@ -87,7 +87,11 @@ class LoginForm(FlaskForm):
         validators=[DataRequired()]
     )
 
-    password = StringField(
+    password = PasswordField(
         "password",
         validators=[DataRequired()]
     )
+
+class CSRFProtection(FlaskForm):
+    """Form for CSRF protection."""
+

@@ -143,13 +143,13 @@ class User(db.Model):
     def register(
         cls,
         username,
-        admin,
         email,
         first_name,
         last_name,
         description,
         password,
-        image_url='/static/images/default-pic.png'):
+        image_url='/static/images/default-pic.png',
+        admin=False):
 
         """Hashes password adds user to system."""
 
@@ -180,10 +180,10 @@ class User(db.Model):
         Returns False if username is not found or password is invalid.
         """
 
-        user = User.query.filter(username=username).first()
+        user = User.query.filter_by(username = username).first()
 
         if user:
-            is_auth = bcrypt.check_password_hash(user.password, password)
+            is_auth = bcrypt.check_password_hash(user.hashed_password, password)
             if is_auth:
                 return user
 
