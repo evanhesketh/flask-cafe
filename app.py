@@ -7,7 +7,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from models import db, connect_db, Cafe, City, User
 
-from forms import CafeForm, SignupForm, LoginForm, CSRFProtection
+from forms import CafeForm, SignupForm, LoginForm, ProfileEditForm, CSRFProtection
 
 
 app = Flask(__name__)
@@ -27,6 +27,7 @@ connect_db(app)
 
 CURR_USER_KEY = "curr_user"
 NOT_LOGGED_IN_MSG = "You are not logged in."
+
 
 @app.before_request
 def add_csrf_from_to_g():
@@ -229,6 +230,7 @@ def handle_login():
 
     return render_template('auth/login-form.html', form=form)
 
+
 @app.post('/logout')
 def handle_logout():
     """Logs out current user and removes user id from session.
@@ -247,6 +249,59 @@ def handle_logout():
     return redirect('/')
 
 
+@app.get('/profile')
+def show_user_profile():
+    """Show user profile page."""
+
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, "danger")
+        return redirect('/login')
+
+    user = g.user
+
+    return render_template('profile/detail.html', user=user, form=g.csrf_form)
 
 
+@app.route('/profile/edit', methods=["GET", "POST"])
+def handle_edit_profile():
+    """If GET, display edit profile form.
+    IF POST, update db with entered information.
 
+    Redirect to profile page with flashed message, "Profile edited."
+    """
+
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, "danger")
+        return redirect('/login')
+
+    user = User.query.get_or_404(g.user.id)
+    form = ProfileEditForm(
+        data={
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "description": user.description,
+            "email": user.email
+        }
+    )
+
+    if form.validate_on_submit():
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+        user.description = form.description.data
+        user.email = form.email.data
+        user.image_url = form.image_url.data or User.image_url.default.arg
+
+        try:
+            db.session.commit()
+
+        except IntegrityError:
+            db.session.rollback()
+
+            flash("Email already taken", "danger")
+            return render_template('profile/edit-form.html', form=form)
+
+        flash("Profile edited", "success")
+        return redirect('/profile')
+
+    else:
+        return render_template('profile/edit-form.html', form=form)

@@ -79,6 +79,34 @@ class SignupForm(FlaskForm):
         validators=[Optional(), URL()]
     )
 
+class ProfileEditForm(FlaskForm):
+    """Form for editing user info."""
+
+    first_name = StringField(
+        "first name",
+        validators=[DataRequired()]
+    )
+
+    last_name= StringField(
+        "last name",
+        validators=[DataRequired()]
+    )
+
+    description = TextAreaField(
+        "description",
+        validators=[Optional()]
+    )
+
+    email = StringField(
+        "email",
+        validators=[DataRequired(), Email()]
+    )
+
+    image_url = StringField(
+        "image URL",
+        validators=[Optional(), URL()]
+    )
+
 class LoginForm(FlaskForm):
     """Form for logging in a user."""
 
