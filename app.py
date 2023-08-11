@@ -103,6 +103,10 @@ def cafe_detail(cafe_id):
 def handle_add_cafe():
     """If GET, shows add cafe form. If POST, handles form submission."""
 
+    if not g.user or not g.user.admin:
+        flash("You are not authorized to view that page", "danger")
+        return redirect('/cafes')
+
     form = CafeForm()
     form.city_code.choices = CafeForm.get_city_choices()
 
@@ -130,6 +134,10 @@ def handle_add_cafe():
 @app.route('/cafes/<int:cafe_id>/edit', methods=["GET", "POST"])
 def handle_edit_cafe(cafe_id):
     """If GET, shows edit cafe form. If POST, handles form submission."""
+
+    if not g.user or not g.user.admin:
+        flash("You are not authorized to view that page", "danger")
+        return redirect('/cafes')
 
     cafe = Cafe.query.get_or_404(cafe_id)
 
@@ -309,6 +317,7 @@ def handle_edit_profile():
 ###############################################################################
 # like routes
 
+
 @app.get('/api/likes')
 def handle_like_query():
     if not g.user:
@@ -323,3 +332,35 @@ def handle_like_query():
             return jsonify({"likes": True})
 
     return jsonify({"likes": False})
+
+
+@app.post('/api/like')
+def handle_like_cafe():
+    if not g.user:
+        error_msg = {"error": "Not logged in"}
+        return jsonify(error_msg)
+
+    cafe_id = int(request.json['cafe_id'])
+
+    cafe = Cafe.query.get(cafe_id)
+    g.user.liked_cafes.append(cafe)
+
+    db.session.commit()
+
+    return jsonify(liked=cafe.id)
+
+
+@app.post('/api/unlike')
+def handle_unlike_cafe():
+    if not g.user:
+        error_msg = {"error": "Not logged in"}
+        return jsonify(error_msg)
+
+    cafe_id = int(request.json['cafe_id'])
+
+    cafe = Cafe.query.get(cafe_id)
+    g.user.liked_cafes.remove(cafe)
+
+    db.session.commit()
+
+    return jsonify(unliked=cafe.id)
