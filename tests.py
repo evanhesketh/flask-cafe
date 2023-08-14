@@ -242,7 +242,9 @@ class CafeAdminViewsTestCase(TestCase):
 
         City.query.delete()
         Cafe.query.delete()
+        User.query.delete()
 
+        # add city and cafe for testing
         sf = City(**CITY_DATA)
         db.session.add(sf)
 
@@ -253,16 +255,28 @@ class CafeAdminViewsTestCase(TestCase):
 
         self.cafe_id = cafe.id
 
+        # add admin user for testing
+        admin = User.register(**ADMIN_USER_DATA)
+        db.session.add(admin)
+
+        db.session.commit()
+        
+        self.admin_id = admin.id
+
     def tearDown(self):
-        """After each test, delete the cities."""
+        """After each test, delete the cities, cafes, and users"""
 
         Cafe.query.delete()
         City.query.delete()
+        User.query.delete()
         db.session.commit()
 
     def test_add(self):
         with app.test_client() as client:
-            resp = client.get(f"/cafes/add")
+            login_for_test(client, self.admin_id)
+
+            resp = client.get(f"/cafes/add",
+                              follow_redirects=True)
             self.assertIn(b'Add Cafe', resp.data)
 
             resp = client.post(
@@ -281,6 +295,8 @@ class CafeAdminViewsTestCase(TestCase):
             r'San Francisco</option></select>')
 
         with app.test_client() as client:
+            login_for_test(client, self.admin_id)
+
             resp = client.get(f"/cafes/add")
             self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
@@ -295,6 +311,8 @@ class CafeAdminViewsTestCase(TestCase):
         id = self.cafe_id
 
         with app.test_client() as client:
+            login_for_test(client, self.admin_id)
+
             resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
             self.assertIn(b'Edit Test Cafe', resp.data)
 
@@ -576,6 +594,7 @@ class LikeViewsTestCase(TestCase):
             self.assertIn('Test Cafe', html)
 
     def test_get_like_status(self):
+        #FIXME: test passes when individual/class test run, but fails when all run
         user = User.query.get(self.user_id)
         cafe = Cafe.query.get(self.cafe_id)
         user.liked_cafes.append(cafe)
@@ -583,6 +602,22 @@ class LikeViewsTestCase(TestCase):
         with app.test_client() as client:
             login_for_test(client, self.user_id)
             resp = client.get('/api/likes', query_string={"cafe_id": 1})
+            print("response json is=", resp.json)
             self.assertEqual({"likes": True}, resp.json)
 
+    def test_like_cafe(self):
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.post('/api/like', json={"cafe_id": self.cafe_id})
 
+            self.assertEqual({"liked": self.cafe_id}, resp.json)
+
+    def test_unlike_cafe(self):
+        user = User.query.get(self.user_id)
+        cafe = Cafe.query.get(self.cafe_id)
+        user.liked_cafes.append(cafe)
+
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.post('/api/unlike', json={"cafe_id": self.cafe_id})
+            self.assertEqual({"unliked": self.cafe_id}, resp.json)
