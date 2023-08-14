@@ -23,11 +23,23 @@
       {{ cafe.get_city_state() }}<br>
     </p>
 
+    {% if g.user and g.user.admin %}
     <p>
       <a class="btn btn-outline-primary" href="/cafes/{{ cafe.id }}/edit">
         Edit Cafe
       </a>
     </p>
+    {% endif %}
+
+    {% if g.user %}
+
+    <p id="c-id" data-cafe-id="{{ cafe.id }}">
+      <button class="btn btn-primary" id="like-btn"></button>
+    </p>
+<!-- script for like/unlike axios requests -->
+    <script src="/static/app.js"></script>
+
+    {% endif %}
 
   </div>
 
