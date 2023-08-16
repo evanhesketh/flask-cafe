@@ -121,7 +121,12 @@ def handle_add_cafe():
         )
 
         db.session.add(cafe)
+        db.session.flush()
+
+        cafe.save_map()
+        
         db.session.commit()
+    
 
         flash(f"{cafe.name} added")
 
