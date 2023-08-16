@@ -6,7 +6,7 @@ from flask import Flask
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///flask_cafe'
-app.config['SQLALCHEMY_ECHO'] = True
+app.config['SQLALCHEMY_ECHO'] = False
 
 connect_db(app)
 
@@ -39,13 +39,12 @@ c1 = Cafe(
 )
 
 c2 = Cafe(
-    name='Perch Coffee',
-    description='Hip and sleek place to get cardamom lattés when biking'
-        ' around Oakland.',
-    address='440 Grand Ave',
-    city_code='oak',
-    url='https://perchoffee.com',
-    image_url='https://s3-media4.fl.yelpcdn.com/bphoto/0vhzcgkzIUIEPIyL2rF_YQ/o.jpg',
+    name='Rise and Grind',
+    description='Another great place for coffee in the morning.',
+    address='2598 Folsom Street',
+    city_code='sf',
+    url='https://www.riseandgrind-sf.com/',
+    image_url='https://s3-media0.fl.yelpcdn.com/bphoto/GXzNog0HnJHwAUnJSeoZjA/348s.jpg',
 )
 
 db.session.add_all([c1, c2])
@@ -91,7 +90,7 @@ db.session.commit()
 #######################################
 # cafe maps
 
-# c1.save_map()
-# c2.save_map()
-#
-#db.session.commit()
+c1.save_map()
+c2.save_map()
+
+db.session.commit()
