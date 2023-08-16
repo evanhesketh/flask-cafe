@@ -128,7 +128,7 @@ def handle_add_cafe():
         db.session.commit()
     
 
-        flash(f"{cafe.name} added")
+        flash(f"{cafe.name} added", "success")
 
         return redirect(f'/cafes/{cafe.id}')
 
@@ -166,9 +166,12 @@ def handle_edit_cafe(cafe_id):
         cafe.city_code = form.city_code.data,
         cafe.image_url = form.image_url.data or Cafe.image_url.default.arg
 
+        
         db.session.commit()
 
-        flash(f"{cafe.name} edited")
+        cafe.save_map()
+
+        flash(f"{cafe.name} edited", "success")
 
         return redirect(f'/cafes/{cafe.id}')
 
